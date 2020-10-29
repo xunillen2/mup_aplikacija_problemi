@@ -1,0 +1,141 @@
+# Open-MUP project
+- Dana 5.8.2020 započelo je privatno istraživanje trenutno javnog API-ja policije(https://c2g.mup.hr/muppublic/), te aplikacije za prijavljivanje incidenata, zbog mnogih žalbi ljudi. Dana 1.10 prestao je razvoj i istraživanje API-a s strane korisnika ET-a (EthicalTanukia) zbog sigurnosnih razloga, te se projekt počinje stavljat na javnu platformu.
+- Ovo nije potpuni dokument, ovo je minimalni predpregled najvecih problema, te će cijeli dokument biti dostupan kasnije.
+
+## Zašto postoji ovaj projekt
+- Mnogi korisnici aplikacije MUP-a žale se da osoba koju su prijavili sazna tko ju je prijavio(tj. jednostavno rečeno, korupcija u policiji). To se želi spriječiti
+- Aplikacija se zalaže za privatno slanje prijave policiji. Nažalost to nije točno, a točke koje opisuju probleme privatnosti ove aplikacije su opisane u sekciji "**problemi**".
+- Opis aplikacije je jako zbunjujuč. U samoj aplikaciji postoji jedan opis koji kaže: "**Ova aplikacija omogučuje potpuno anonimnu prijavu slučaja policiji i daljnje pračenje vaše prijave.**" i ništa drugo. Dok u trg. play u opisu aplikacije piše: "**Ako je iz senzora mobilnog uređaja dostuna lokacija. šalje se zajedno s prijavom.**", no budimo realni, tko to gleda... To treba biti poruka na prvom pokretanju aplikacije.
+
+
+## Problemi
+- Ovdje su uglavnom analizirane klase koje programer naziva "modeli". Opisuje se njihovo korištenje i problemi.
+
+### Lokacija
+- Ovo je upotpunosti nepotrebno, te služi samo sa ind. korisnika koji je poslao prijavu (npr. osoba koja stavara prijavu se trenutno nalazi u svom stanu, te želi prijaviti incident udaljen udaljen 100m koji vidi s prozora. Aplikacija će poslati lokaciju korisnika, tj. lokaciju njegovog stana... Što stvarno nema nikakvog smisla).
+- Postoji problem ako se korisnik ne nalazi na Android verziji => 5.1 gdje su dodana dopuštenja aplikacije. Ako je lokacija dostupna prilikom slanja prijave, izgleda da aplikacija uopče ne pita korisnika, prijstaje li on na slanje svoje lokacije, nego je automatski pošalje.
+- Pitanje za lokaciju (dialog_location_message) se jedino aktivira ako lokacija nije dostupna. Što nema veze s vezom.
+- Dovoljno je samo dodati dodatni textbox za unos lokacije(adresa ili grad) ili in-app kartu za odabir lokacije incidenta. Na taj način se spriječava određivanje točne lokacije osobe koja je poslala prijavu.  
+
+bazna klasa models/LocationDto.java:
+
+```
+...
+public class LocationDto {
+    public Double Latitude;
+    public Double Longitude;
+}
+...
+```
+
+Ta klasa se koristi u svim dodatnim klasama(objektima) za spremanje lokacije.
+
+klasa za izradu incidenta models/ExternalIncidentDto.java:
+
+```
+public class ExternalIncidentDto extends BaseDto {
+...
+    public LocationDto Location;
+...
+}
+```
+
+Klasa za pračenje statusa incidenta models/IncidentDto.java
+```
+public class IncidentDto extends BaseDto {
+...
+    public LocationDto Location;
+...
+}
+```
+
+Zahtjev lokacije od strane aplikacije:
+
+![Zahtjev lokacije od strane aplikacije](location.png)
+
+
+
+### Slike i metapodaci
+- Korištenje slike kao dodatni dokazni materijal tijekom prijave je dobra ideja, no postoje veliki problemi u implementaciji.
+- Pošto slike sadrže EXIF metapodatak(a omogučeno kao default!!!). Moguća je potpuna identifikacija korisnika.
+- Največi problem predstavljaja EXIF tag 0x8825 (informacija lokacije). Pošto sama aplikacija ne uklanja EXIF metapodatak prije slanja prijave, a nije poznato dali server uklanja EXIF metapodatak prije spremanja prijave, ovo je veliki udar na privatnost osobe koja šalje prijavu.  
+- Aplikacija koristi EXIF metapodatak samo za detekciju rotacije slike:
+
+
+a/a/z.java:
+```
+...
+    static int a(Uri uri) {
+        switch (new ExifInterface(uri.getPath()).getAttributeInt("Orientation", 1)) {
+            case 3:
+                return 180;
+            case 6:
+                return 90;
+            case 8:
+                return 270;
+            default:
+                return 0;
+        }
+    }
+...
+```
+
+d.java:
+```
+...
+    private static Matrix f(String str) {
+        Matrix matrix = new Matrix();
+        try {
+            int attributeInt = new ExifInterface(str).getAttributeInt("Orientation", 1);
+            if (attributeInt == 6) {
+                matrix.postRotate(90.0f);
+            } else if (attributeInt == 3) {
+                matrix.postRotate(180.0f);
+            } else if (attributeInt == 8) {
+                matrix.postRotate(270.0f);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return matrix;
+    }
+...
+```
+
+### Korupcija
+- Nažalost bilo je slučajeva gdje prijavljeni sazna koja ih je osoba prijavila. Najčešći razlog tomu je da se prijavljeni i zaposlenik(policajac) poznaju.
+- Riješenja tog problema nalazi se u "**Potpuno riješenje**".
+
+
+## Riješenje
+### Minimalno riješenje (moglo bi se reći zakrpa)
+- Napraviti bridge server koji prosljeđuje prijave na "https://c2g.mup.hr/muppublic/"
+- Nažalost to spriječava samo probleme privatnosti, a ne i korupciju.
+
+![Alt text](bridge_alt.png)
+
+
+### Potpuno riješenje
+-  Ovo riješenje riješava ne samo probleme privatnosti nego i korupciju u policiji. No potrebno je potpuno preuređenje infrastrukture i logike javnog API-a (https://c2g.mup.hr/muppublic/).
+-  Predloženo riješenje:
+
+![Alt text](fix.png)
+
+
+# Public API
+
+**api/Incident/CancelIncident?incidentId=** -> Otkazivanje incidenta
+
+**api/Incident/AddComment?incidentId="**    -> Dodavanje komentara na incident
+
+**api/Incident/GetIncidents**               -> Dobivanje liste incidenata
+
+**api/Incident/CreateIncident**            -> Kreacija novog incidenta
+
+
+Tko god je radio ovu aplikaciju i infrastrukturu, nema blage veze što znači riječ 'privatnost'.  
+Nadamo se da će vam to pomoći spriječiti korupciju unutar policije, te javljanje prijavljenome da je prijavljen.
+Te se moli da se taj problem što prije riješi.
+
+CopyRight EthicalTanuki and team.
+Forked from ET repo.
