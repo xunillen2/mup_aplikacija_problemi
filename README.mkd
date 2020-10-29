@@ -121,6 +121,10 @@ d.java:
 
 ![Alt text](fix.png)
 
+# Nadopune
+- Postoji mogučnost da je projekt sufinanciran s strane područja Europske unije
+- Postoji mogučnost da su dodane zakrpe na server koje rješavaju probleme već poznatih javnih exploita.
+- Iz neprovjerenih izvora sam ćuo da se taj exploit koristi u karlovačkoj županiji (O----).
 
 # Public API
 
