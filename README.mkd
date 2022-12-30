@@ -104,10 +104,10 @@ d.java:
 
 ### Korupcija
 - Nažalost bilo je slučajeva gdje prijavljeni sazna koja ih je osoba prijavila. Najčešći razlog tomu je da se prijavljeni i zaposlenik(policajac) poznaju.
-- Riješenja tog problema nalazi se u "**Potpuno riješenje**".
+- Rješenja tog problema nalazi se u "**Potpuno riješenje**".
 
 
-## Riješenje
+## Rješenje
 ### Minimalno riješenje (moglo bi se reći zakrpa)
 - Napraviti bridge server koji prosljeđuje prijave na "https://c2g.mup.hr/muppublic/"
 - Nažalost to spriječava samo probleme privatnosti, a ne i korupciju.
@@ -115,15 +115,15 @@ d.java:
 ![Alt text](bridge_alt.png)
 
 
-### Potpuno riješenje
--  Ovo riješenje riješava ne samo probleme privatnosti nego i korupciju u policiji. No potrebno je potpuno preuređenje infrastrukture i logike javnog API-a (https://c2g.mup.hr/muppublic/).
--  Predloženo riješenje:
+### Potpuno rješenje
+-  Ovo rješenje rješava ne samo probleme privatnosti nego i korupciju u policiji. No potrebno je potpuno preuređenje infrastrukture i logike javnog API-a (https://c2g.mup.hr/muppublic/).
+-  Predloženo rješenje:
 
 ![Alt text](fix.png)
 
 # Nadopune
-- Postoji mogučnost da je projekt sufinanciran s strane područja Europske unije
-- Postoji mogučnost da su dodane zakrpe na server koje rješavaju probleme već poznatih javnih exploita.
+- Postoji mogućnost da je projekt sufinanciran s strane područja Europske unije. Je, i tu su se zalagali za potpunu privatnost.
+- Postoji mogućnost da su dodane zakrpe na server koje rješavaju probleme već poznatih javnih exploita.
 - Iz neprovjerenih izvora sam čuo da se taj exploit(korupcija) koristi u karlovačkoj županiji (O----).
 
 # Public API
